@@ -15,6 +15,7 @@ class TransactionModel extends Transaction {
     required super.isPrevision,
     super.isTransfer,
     super.interestRate,
+    super.transferDetails,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -30,6 +31,7 @@ class TransactionModel extends Transaction {
       isPrevision: json['isPrevision'] ?? false,
       isTransfer: json['isTransfer'] ?? false,
       interestRate: (json['interestRate'] as num?)?.toDouble(),
+      transferDetails: json['transferDetails'] as Map<String, dynamic>?,
     );
   }
   
@@ -46,6 +48,7 @@ class TransactionModel extends Transaction {
       isPrevision: transaction.isPrevision,
       isTransfer: transaction.isTransfer,
       interestRate: transaction.interestRate,
+      transferDetails: transaction.transferDetails,
     );
   }
 
@@ -62,6 +65,7 @@ class TransactionModel extends Transaction {
       'isPrevision': isPrevision,
       'isTransfer': isTransfer,
       'interestRate': interestRate,
+      'transferDetails': transferDetails,
     };
     json.removeWhere((key, value) => value == null);
     return json;

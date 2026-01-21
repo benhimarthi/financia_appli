@@ -24,6 +24,18 @@ class SavingGoalModel extends SavingGoal {
     );
   }
 
+  factory SavingGoalModel.fromSavingGoal(SavingGoal savingGoal) {
+    return SavingGoalModel(
+      id: savingGoal.id,
+      userId: savingGoal.userId,
+      name: savingGoal.name,
+      targetAmount: savingGoal.targetAmount,
+      currentAmount: savingGoal.currentAmount,
+      targetDate: savingGoal.targetDate,
+      date: savingGoal.date,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,

@@ -242,21 +242,23 @@ class _IncomeTransactionFormState extends State<IncomeTransactionForm> {
 
                   final authState = context.read<AuthCubit>().state;
                   if (authState is AuthSuccess) {
-                  final transaction = Transaction(
-                    id: const Uuid().v4(),
-                    userId: Uuid().v4(), //authState.user.id,
-                    description: _noteController.text,
-                    amount: double.parse(_amountController.text),
-                    date: DateTime.now(),
-                    category: TransactionCategory.income,
-                    periodicity: Periodicity.none,
-                    isPrevision: false,
-                    tag: _selectedTag!,
-                  );
-                  // This is where you would normally dispatch an event to your Bloc/Cubit
-                  // For example: context.read<TransactionCubit>().addTransaction(transaction);
-                  context.read<TransactionCubit>().addTransaction(transaction);
-                  Navigator.of(context).pop(); // Close the bottom sheet
+                    final transaction = Transaction(
+                      id: const Uuid().v4(),
+                      userId: authState.user.id,
+                      description: _noteController.text,
+                      amount: double.parse(_amountController.text),
+                      date: DateTime.now(),
+                      category: TransactionCategory.income,
+                      periodicity: Periodicity.none,
+                      isPrevision: false,
+                      tag: _selectedTag!,
+                    );
+                    // This is where you would normally dispatch an event to your Bloc/Cubit
+                    // For example: context.read<TransactionCubit>().addTransaction(transaction);
+                    context.read<TransactionCubit>().addTransaction(
+                      transaction,
+                    );
+                    Navigator.of(context).pop(); // Close the bottom sheet
                   }
                 }
               },

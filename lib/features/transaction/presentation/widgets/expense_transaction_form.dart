@@ -243,7 +243,7 @@ class _ExpenseTransactionFormState extends State<ExpenseTransactionForm> {
                   if (authState is AuthSuccess) {
                     final transaction = Transaction(
                       id: const Uuid().v4(),
-                      userId: const Uuid().v4(), //authState.user.id,
+                      userId: authState.user.id,
                       description: _noteController.text,
                       amount: double.parse(_amountController.text),
                       date: DateTime.now(),

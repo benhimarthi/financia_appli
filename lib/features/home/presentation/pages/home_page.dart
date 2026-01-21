@@ -1,14 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:myapp/features/finances/presentation/pages/finances_page.dart';
 import 'package:myapp/features/finances/presentation/widgets/financial_goal_form.dart';
 import 'package:myapp/features/home/presentation/pages/home_content.dart';
 import 'package:myapp/features/home/presentation/widgets/home_bottom_navigation_bar.dart';
 import 'package:myapp/features/plan/presentation/pages/plan_page.dart';
-import 'package:myapp/features/saving_goal/domain/entities/saving_goal.dart';
-import 'package:myapp/features/saving_goal/presentation/cubit/saving_goal_cubit.dart';
 import 'package:myapp/features/transaction/presentation/widgets/debt_form.dart';
 import 'package:myapp/features/transaction/presentation/widgets/expense_transaction_form.dart';
 import 'package:myapp/features/transaction/presentation/widgets/income_transaction_form.dart';
@@ -16,7 +13,6 @@ import 'package:myapp/features/transaction/presentation/widgets/transfer_form.da
 import 'package:myapp/features/wealth/presentation/pages/wealth_page.dart';
 import 'package:myapp/locale_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../transaction/domain/entities/transaction_category.dart';
@@ -103,37 +99,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-    void _showFinancialGoalForm() {
+  void _showFinancialGoalForm() {
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthSuccess) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
-      ),
-      builder: (context) => FinancialGoalForm(
-        onSubmit: (name, targetAmount, currentAmount, targetDate, date) {
-          final newSavingGoal = SavingGoal(
-            id: const Uuid().v4(),
-            userId: authState.user.id,
-            name: name,
-            targetAmount: targetAmount,
-            currentAmount: currentAmount,
-            targetDate: targetDate,
-            date: date,
-          );
-          context.read<SavingGoalCubit>().addSavingGoal(newSavingGoal);
-        },
-      ),
-    );
+        builder: (context) => FinancialGoalForm(),
+      );
     }
   }
-
 
   void _showDebtForm() {
     showModalBottomSheet(

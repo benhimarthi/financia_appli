@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:myapp/features/saving_goal/domain/entities/saving_goal.dart';
+import 'package:myapp/features/saving_goal/presentation/cubit/saving_goal_cubit.dart';
+import 'package:myapp/features/transaction/domain/entities/periodicity.dart';
+import 'package:myapp/features/transaction/domain/entities/transaction.dart';
+import 'package:myapp/features/transaction/domain/entities/transaction_category.dart';
+import 'package:myapp/features/transaction/presentation/bloc/transaction_cubit.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../../auth/presentation/bloc/auth_cubit.dart';
 
 class FinancialGoalForm extends StatefulWidget {
-  final Function(String, double, double, DateTime, DateTime) onSubmit;
-
-  const FinancialGoalForm({super.key, required this.onSubmit});
+  const FinancialGoalForm({super.key});
 
   @override
   _FinancialGoalFormState createState() => _FinancialGoalFormState();
@@ -35,13 +43,39 @@ class _FinancialGoalFormState extends State<FinancialGoalForm> {
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      widget.onSubmit(
+      /*widget.onSubmit(
         _goalName,
         _targetAmount,
         _currentAmount,
         _targetDate,
         DateTime.now(),
-      );
+      );*/
+      final authState = context.read<AuthCubit>().state;
+      if (authState is AuthSuccess) {
+        var goal = SavingGoal(
+          id: Uuid().v4(),
+          userId: authState.user.id,
+          name: _goalName,
+          targetAmount: _targetAmount,
+          currentAmount: _currentAmount,
+          targetDate: _targetDate,
+          date: DateTime.now(),
+        );
+        context.read<SavingGoalCubit>().addSavingGoal(goal);
+        var trans = Transaction(
+          id: Uuid().v4(),
+          userId: authState.user.id,
+          amount: _currentAmount,
+          category: TransactionCategory.transfert,
+          date: DateTime.now(),
+          description: "transfert fund to saving account",
+          periodicity: Periodicity.none,
+          tag: "transfert",
+          isPrevision: false,
+          isTransfer: true,
+        );
+        context.read<TransactionCubit>().addTransaction(trans);
+      }
       Navigator.of(context).pop();
     }
   }

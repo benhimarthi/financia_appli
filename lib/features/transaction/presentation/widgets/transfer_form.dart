@@ -24,11 +24,13 @@ class _TransferFormState extends State<TransferForm> {
   final _amountController = TextEditingController(text: '0');
   String? _fromAccount;
   String? _toAccount;
-  bool _showSavingGoals = false;
-  SavingGoal? _selectedGoal;
+  bool _showFromSavingGoals = false;
+  bool _showToSavingGoals = false;
+  SavingGoal? _selectedFromGoal;
+  SavingGoal? _selectedToGoal;
 
-  final List<String> _fromOptions = ['Income', 'Cash Available', 'Savings'];
-  final List<String> _toOptions = ['Savings Goal', 'Investment', 'Debt Payment'];
+  final List<String> _fromOptions = ['Cash Available', 'Savings'];
+  final List<String> _toOptions = ['Savings Goal', 'Cash Available', 'Debt Payment'];
 
   @override
   void dispose() {
@@ -129,11 +131,26 @@ class _TransferFormState extends State<TransferForm> {
                 onSelected: (selected) {
                   setState(() {
                     _fromAccount = selected ? account : null;
+                    _showFromSavingGoals = selected && account == 'Savings';
+                     if (!_showFromSavingGoals) {
+                      _selectedFromGoal = null;
+                    }
                   });
                 },
               );
             }).toList(),
           ),
+            if (_showFromSavingGoals)
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: SelectSavingGoal(
+                onGoalSelected: (goal) {
+                  setState(() {
+                    _selectedFromGoal = goal as SavingGoal?;
+                  });
+                },
+              ),
+            ),
           const SizedBox(height: 16),
           Center(
             child: Icon(Icons.arrow_downward, color: Colors.grey[400]),
@@ -159,19 +176,22 @@ class _TransferFormState extends State<TransferForm> {
                 onSelected: (selected) {
                   setState(() {
                     _toAccount = selected ? account : null;
-                    _showSavingGoals = selected && account == 'Savings Goal';
+                    _showToSavingGoals = selected && account == 'Savings Goal';
+                     if (!_showToSavingGoals) {
+                      _selectedToGoal = null;
+                    }
                   });
                 },
               );
             }).toList(),
           ),
-          if (_showSavingGoals)
+          if (_showToSavingGoals)
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
               child: SelectSavingGoal(
                 onGoalSelected: (goal) {
                   setState(() {
-                    _selectedGoal = goal as SavingGoal?;
+                    _selectedToGoal = goal as SavingGoal?;
                   });
                 },
               ),
@@ -195,25 +215,37 @@ class _TransferFormState extends State<TransferForm> {
                   );
                   return;
                 }
-                if (_toAccount == 'Savings Goal' && _selectedGoal == null) {
+                 if (_fromAccount == 'Savings' && _selectedFromGoal == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select a saving goal')),
+                    const SnackBar(content: Text('Please select a saving goal to transfer from')),
+                  );
+                  return;
+                }
+                if (_toAccount == 'Savings Goal' && _selectedToGoal == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please select a saving goal to transfer to')),
                   );
                   return;
                 }
                 final authState = context.read<AuthCubit>().state;
                 if (authState is AuthSuccess) {
+                  final fromText = _fromAccount == 'Savings' ? _selectedFromGoal!.name : _fromAccount;
+                  final toText = _toAccount == 'Savings Goal' ? _selectedToGoal!.name : _toAccount;
                   final transaction = Transaction(
                     id: const Uuid().v4(),
                     userId: authState.user.id,
                     amount: double.parse(_amountController.text),
                     category: TransactionCategory.transfert,
                     date: DateTime.now(),
-                    description: 'Transfer from $_fromAccount to ${_toAccount == 'Savings Goal' ? _selectedGoal!.name : _toAccount}',
+                    description: 'Transfer from $fromText to $toText',
                     periodicity: Periodicity.none,
                     tag: 'Transfer',
                     isPrevision: false,
                     isTransfer: true,
+                    transferDetails: {
+                      'from': _fromAccount == 'Savings' ? _selectedFromGoal!.id : _fromAccount,
+                      'to': _toAccount == 'Savings Goal' ? _selectedToGoal!.id : _toAccount,
+                    },
                   );
                   context.read<TransactionCubit>().addTransaction(transaction);
                   Navigator.of(context).pop();
