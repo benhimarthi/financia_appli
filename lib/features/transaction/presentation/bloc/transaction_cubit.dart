@@ -77,4 +77,9 @@ class TransactionCubit extends Cubit<TransactionState> {
       (_) => getTransactions(),
     );
   }
+
+  Future<void> emitRandomELement(Map<String, dynamic> data) async {
+    emit(TransactionLoading());
+    emit(TransactionRandomEmit(data));
+  }
 }

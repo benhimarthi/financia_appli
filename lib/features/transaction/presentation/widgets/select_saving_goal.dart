@@ -32,7 +32,7 @@ class _SelectSavingGoalState extends State<SelectSavingGoal> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer(
+    return BlocConsumer<SavingGoalCubit, SavingGoalState>(
       listener: (context, state) {
         if (state is SavingGoalLoaded) {
           _savingGoals = state.savingGoals;

@@ -43,13 +43,6 @@ class _FinancialGoalFormState extends State<FinancialGoalForm> {
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      /*widget.onSubmit(
-        _goalName,
-        _targetAmount,
-        _currentAmount,
-        _targetDate,
-        DateTime.now(),
-      );*/
       final authState = context.read<AuthCubit>().state;
       if (authState is AuthSuccess) {
         var goal = SavingGoal(

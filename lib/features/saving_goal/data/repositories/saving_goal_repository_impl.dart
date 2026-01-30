@@ -16,7 +16,9 @@ class SavingGoalRepositoryImpl implements SavingGoalRepository {
   @override
   ResultVoid addSavingGoal(SavingGoal savingGoal) async {
     try {
-      await _remoteDataSource.addSavingGoal(savingGoal as SavingGoalModel);
+      await _remoteDataSource.addSavingGoal(
+        SavingGoalModel.fromSavingGoal(savingGoal),
+      );
       return const Right(null);
     } on FirebaseExceptions catch (e) {
       return Left(

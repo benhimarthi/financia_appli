@@ -21,6 +21,12 @@ class TransactionLoaded extends TransactionState {
   List<Object> get props => [transactions];
 }
 
+class TransactionRandomEmit extends TransactionState{
+  final Map<String, dynamic> data;
+
+  const TransactionRandomEmit(this.data);
+}
+
 class TransactionError extends TransactionState {
   final String message;
 

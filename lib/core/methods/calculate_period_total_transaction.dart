@@ -8,7 +8,6 @@ class CalculatePeriodTransaction {
     int month,
     int year,
   ) {
-    //print(transactions.length);
     //Filter the transactions by income and periodicity
     List<Transaction> incomeTransactions = transactions
         .where(
@@ -18,10 +17,28 @@ class CalculatePeriodTransaction {
               transaction.date.year == year,
         )
         .toList();
-    return incomeTransactions.fold(
-      0,
-      (previousValue, element) => previousValue + element.amount,
-    );
+    return incomeTransactions.fold(0, (previousValue, element) {
+      return previousValue + element.amount;
+    });
+  }
+
+  static double calculateMonthTotalTransferFromCash(
+    List<Transaction> transactions,
+    int month,
+    int year,
+  ) {
+    List<Transaction> transfert = transactions
+        .where(
+          (transaction) =>
+              transaction.category == TransactionCategory.transfert &&
+              transaction.transferDetails!.values.first == "Cash Available" &&
+              transaction.date.month == month &&
+              transaction.date.year == year,
+        )
+        .toList();
+    return transfert.fold(0, (previousValue, element) {
+      return previousValue + element.amount;
+    });
   }
 
   static double compareMonthTotalTransaction(
@@ -88,11 +105,17 @@ class CalculatePeriodTransaction {
     List<Transaction> expenseTransactions = transactions
         .where(
           (x) =>
-              x.category == TransactionCategory.income &&
+              x.category == TransactionCategory.expense &&
               x.date.month == month &&
               x.date.year == year,
         )
         .toList();
+    double transfert = calculateMonthTotalTransferFromCash(
+      transactions,
+      month,
+      year,
+    );
+    print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB ---- $transfert");
     double incomeAmount = incomeTransactions.fold(
       0,
       (previousValue, element) => previousValue + element.amount,
@@ -115,6 +138,7 @@ class CalculatePeriodTransaction {
       month,
       year,
     );
+
     int previousMonth = month - 1;
     int previousYear = year;
     if (previousMonth == 0) {

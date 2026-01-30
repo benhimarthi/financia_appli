@@ -163,7 +163,7 @@ class _DebtFormState extends State<DebtForm> {
                   return ChoiceChip(
                     label: Text(tag.toString().split('.').last),
                     selected: isSelected,
-                    selectedColor: Colors.orange.withOpacity(0.2),
+                    selectedColor: Colors.orange.withAlpha(51),
                     backgroundColor: Colors.grey[200],
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.deepOrange : Colors.black,
@@ -266,10 +266,13 @@ class _DebtFormState extends State<DebtForm> {
                         amount: double.parse(_amountController.text),
                         date: DateTime.now(),
                         category:
-                            TransactionCategory.expense, // Debt is an expense
+                            TransactionCategory.debt, // Debt is an expense
                         periodicity: Periodicity.none,
                         isPrevision: false,
                         tag: _selectedDebtType.toString().split('.').last,
+                        interestRate: double.parse(
+                          _interestRateController.text,
+                        ),
                       );
                       context.read<TransactionCubit>().addTransaction(
                         transaction,
