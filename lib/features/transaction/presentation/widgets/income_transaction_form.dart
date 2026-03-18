@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,12 +7,13 @@ import 'package:myapp/features/transaction/domain/entities/income_tags.dart';
 import 'package:myapp/features/transaction/domain/entities/transaction.dart';
 import 'package:myapp/features/transaction/presentation/bloc/transaction_cubit.dart';
 import 'package:uuid/uuid.dart';
-
 import '../../domain/entities/periodicity.dart';
 import '../../domain/entities/transaction_category.dart';
 
 class IncomeTransactionForm extends StatefulWidget {
-  const IncomeTransactionForm({super.key});
+  final bool isPrevision;
+  final DateTime? previsionDate;
+  const IncomeTransactionForm({super.key, required this.isPrevision, this.previsionDate});
 
   @override
   State<IncomeTransactionForm> createState() => _IncomeTransactionFormState();
@@ -36,8 +38,13 @@ class _IncomeTransactionFormState extends State<IncomeTransactionForm> {
     const icon = Icons.trending_up;
     const color = Colors.green;
 
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 20,
+        right: 20,
+        top: 20,
+      ),
       child: Form(
         key: _formKey,
         child: Column(
@@ -79,14 +86,14 @@ class _IncomeTransactionFormState extends State<IncomeTransactionForm> {
             // Amount Field
             Text(
               'Amount',
-              style: GoogleFonts.roboto(fontSize: 16, color: Colors.grey[600]),
+              style: GoogleFonts.roboto(
+                  fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+              keyboardType:
+              const TextInputType.numberWithOptions(decimal: true),
               style: GoogleFonts.roboto(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -102,16 +109,10 @@ class _IncomeTransactionFormState extends State<IncomeTransactionForm> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.arrow_drop_up,
-                      size: 20,
-                      color: Colors.grey[600],
-                    ),
-                    Icon(
-                      Icons.arrow_drop_down,
-                      size: 20,
-                      color: Colors.grey[600],
-                    ),
+                    Icon(Icons.arrow_drop_up,
+                        size: 20, color: Colors.grey[600]),
+                    Icon(Icons.arrow_drop_down,
+                        size: 20, color: Colors.grey[600]),
                   ],
                 ),
                 filled: true,
@@ -147,7 +148,7 @@ class _IncomeTransactionFormState extends State<IncomeTransactionForm> {
               children: [50, 100, 250, 500, 1000].map((amount) {
                 return ActionChip(
                   label: Text('\$$amount'),
-                  backgroundColor: Colors.grey[200],
+                  //backgroundColor: Colors.grey[200],
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -163,7 +164,8 @@ class _IncomeTransactionFormState extends State<IncomeTransactionForm> {
             // Category Field
             Text(
               'Category',
-              style: GoogleFonts.roboto(fontSize: 16, color: Colors.grey[600]),
+              style: GoogleFonts.roboto(
+                  fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -199,11 +201,13 @@ class _IncomeTransactionFormState extends State<IncomeTransactionForm> {
             // Note Field
             Text(
               'Note (optional)',
-              style: GoogleFonts.roboto(fontSize: 16, color: Colors.grey[600]),
+              style: GoogleFonts.roboto(
+                  fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _noteController,
+              maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Add a quick note...',
                 filled: true,
@@ -221,44 +225,53 @@ class _IncomeTransactionFormState extends State<IncomeTransactionForm> {
               icon: const Icon(Icons.check, color: Colors.white),
               label: const Text(
                 'Confirm',
-                style: TextStyle(color: Colors.white, fontSize: 18),
+                style:
+                TextStyle(color: Colors.white, fontSize: 18),
               ),
               style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 56),
+                minimumSize:
+                const Size(double.infinity, 56),
                 backgroundColor: Colors.grey[900],
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius:
+                  BorderRadius.circular(10),
                 ),
               ),
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
                   if (_selectedTag == null) {
-                    // Optionally show a message to the user to select a category
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please select a category')),
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(
+                      const SnackBar(
+                          content: Text(
+                              'Please select a category')),
                     );
                     return;
                   }
 
-                  final authState = context.read<AuthCubit>().state;
+                  final authState =
+                      context.read<AuthCubit>().state;
                   if (authState is AuthSuccess) {
                     final transaction = Transaction(
                       id: const Uuid().v4(),
                       userId: authState.user.id,
                       description: _noteController.text,
-                      amount: double.parse(_amountController.text),
-                      date: DateTime.now(),
-                      category: TransactionCategory.income,
+                      amount: double.parse(
+                          _amountController.text),
+                      date: widget.previsionDate ?? DateTime.now(),
+                      category:
+                      TransactionCategory.income,
                       periodicity: Periodicity.none,
-                      isPrevision: false,
+                      isPrevision: widget.isPrevision,
                       tag: _selectedTag!,
+                      currency: authState.user.currentCurrency,
                     );
-                    // This is where you would normally dispatch an event to your Bloc/Cubit
-                    // For example: context.read<TransactionCubit>().addTransaction(transaction);
-                    context.read<TransactionCubit>().addTransaction(
-                      transaction,
-                    );
-                    Navigator.of(context).pop(); // Close the bottom sheet
+
+                    context
+                        .read<TransactionCubit>()
+                        .addTransaction(transaction);
+
+                    Navigator.of(context).pop();
                   }
                 }
               },

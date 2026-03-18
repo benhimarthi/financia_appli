@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:myapp/core/errors/exceptions.dart';
 import 'package:myapp/core/utils/typedef.dart';
 import 'package:myapp/features/auth/data/datasources/auth_local_data_source.dart';
@@ -103,6 +106,31 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await _remoteDataSource.updateUser(updates);
       return Right(user);
     } on FirebaseExceptions catch (e) {
+      return Left(FirebaseFailure.fromException(e));
+    }
+  }
+
+  @override
+  ResultVoid changeEmail({required String newEmail, required String password}) async {
+    try {
+      await _remoteDataSource.changeEmail(
+        newEmail: newEmail,
+        password: password,
+      );
+      return const Right(unit); // Success
+    } on FirebaseExceptions catch (e) {
+      // This could be a wrong password, email conflict, etc.
+      return Left(FirebaseFailure.fromException(e));
+    }
+  }
+
+  @override
+  ResultFuture<UserModel> getUserById(String id) async{
+    try {
+      final user = await _remoteDataSource.getUserById(id);
+      return Right(user);
+    }
+    on FirebaseExceptions catch (e) {
       return Left(FirebaseFailure.fromException(e));
     }
   }

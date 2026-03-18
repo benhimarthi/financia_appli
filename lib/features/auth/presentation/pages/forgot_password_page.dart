@@ -24,11 +24,30 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return AuthScaffold(
       formKey: _formKey,
-      title: 'Forgot Password',
+      title: '',//'Change Password',
       fields: [
+        Text(
+          "Change Password",
+          style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          "We will send you a link to your email to reset your password.",
+          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
         TextFormField(
           controller: _emailController,
-          decoration: const InputDecoration(labelText: 'Email'),
+          decoration: InputDecoration(
+            labelText: 'Enter your email',
+            filled: true,
+            border: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+              borderSide: BorderSide.none,
+            ),
+            suffixIcon: Icon(Icons.email_outlined, color: Theme.of(context).colorScheme.primary)
+          ),
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter your email';

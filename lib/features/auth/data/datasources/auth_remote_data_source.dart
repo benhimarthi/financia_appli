@@ -15,4 +15,8 @@ abstract class AuthRemoteDataSource {
   Future<void> deleteUser(String id);
 
   Future<UserModel> updateUser(UserModel updates);
+  Future<void> changeEmail({
+    required String newEmail,
+    required String password,
+  });
 }

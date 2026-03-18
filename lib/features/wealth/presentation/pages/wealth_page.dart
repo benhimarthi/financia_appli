@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:myapp/features/transaction/domain/entities/transaction.dart';
+import 'package:myapp/features/transaction/presentation/bloc/transaction_state.dart';
 import 'package:myapp/features/wealth/presentation/widgets/accounts_list.dart';
 import 'package:myapp/features/wealth/presentation/widgets/liquid_wealth_card.dart';
 import 'package:myapp/features/wealth/presentation/widgets/wealth_evolution_chart.dart';
+
+import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../transaction/presentation/bloc/transaction_cubit.dart';
 
 class WealthPage extends StatefulWidget {
   const WealthPage({super.key});
@@ -48,7 +54,7 @@ class _WealthPageState extends State<WealthPage> with SingleTickerProviderStateM
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: _offsetAnimation,
-        child: const SingleChildScrollView(
+        child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.all(16.0),
             child: Column(
@@ -65,16 +71,28 @@ class _WealthPageState extends State<WealthPage> with SingleTickerProviderStateM
                 Text(
                   'Your available cash & accounts',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 12,
                     color: Colors.grey,
                   ),
                 ),
                 SizedBox(height: 24),
-                LiquidWealthCard(),
-                SizedBox(height: 24),
-                WealthEvolutionChart(),
-                SizedBox(height: 24),
-                AccountsList(),
+                BlocConsumer<TransactionCubit, TransactionState>(
+                    listener: (context, state){
+                      if(state is TransactionLoaded){
+                      }
+                    },
+                    builder: (context, state){
+                      return Column(
+                        children: [
+                          LiquidWealthCard(),
+                          SizedBox(height: 24),
+                          WealthEvolutionChart(),
+                          SizedBox(height: 24),
+                          AccountsList(),
+                        ]
+                      );
+                    },
+                )
               ],
             ),
           ),

@@ -1,113 +1,175 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:myapp/core/methods/calculate_period_total_transaction.dart';
+import 'package:myapp/features/transaction/domain/entities/transaction_category.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../transaction/domain/entities/transaction.dart';
+import '../../../transaction/presentation/bloc/transaction_cubit.dart';
+import '../../../transaction/presentation/bloc/transaction_state.dart';
 
-class IncomeExpensesChart extends StatelessWidget {
+class IncomeExpensesChart extends StatefulWidget {
   const IncomeExpensesChart({super.key});
+
+  @override
+  State<IncomeExpensesChart> createState() => _IncomeExpensesChartState();
+}
+
+class _IncomeExpensesChartState extends State<IncomeExpensesChart> {
+  late List<Transaction> myTransactions;
+
+  /// 🎬 You can change animation curve here
+  final Curve _chartCurve = Curves.easeOutCubic;
+
+  /// 🎬 You can change animation duration here
+  final Duration _chartDuration = const Duration(milliseconds: 700);
+
+  @override
+  void initState() {
+    super.initState();
+    myTransactions = [];
+
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthSuccess) {
+      context.read<TransactionCubit>().setUserId(authState.user.id);
+      context.read<TransactionCubit>().getTransactions();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 1.6,
       child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
+            children: [
+              /// 🔹 Header + Legend
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     'Income vs Expenses',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLegend(Colors.green, 'Income'),
+                      _buildLegend(
+                          const Color.fromARGB(255, 16, 182, 126), 'Income'),
                       const SizedBox(width: 16),
-                      _buildLegend(Colors.red, 'Expenses'),
+                      _buildLegend(
+                          const Color.fromARGB(255, 241, 122, 122), 'Expenses'),
+                      _buildLegend(
+                          const Color.fromARGB(255, 180, 122, 241), 'Transfers'),
                     ],
                   ),
                 ],
               ),
-              const SizedBox(height: 38),
-              Expanded(
-                child: BarChart(
-                  BarChartData(
-                    alignment: BarChartAlignment.spaceBetween,
-                    maxY: 20,
-                    barTouchData: BarTouchData(enabled: false),
-                    titlesData: FlTitlesData(
-                      show: true,
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 30,
-                          getTitlesWidget: (double value, TitleMeta meta) {
-                            const style = TextStyle(
-                              color: Colors.grey,
-                              fontSize: 10,
-                            );
-                            String text;
-                            switch (value.toInt()) {
-                              case 0:
-                                text = 'Jul';
-                                break;
-                              case 1:
-                                text = 'Aug';
-                                break;
-                              case 2:
-                                text = 'Sep';
-                                break;
-                              case 3:
-                                text = 'Oct';
-                                break;
-                              case 4:
-                                text = 'Nov';
-                                break;
-                              case 5:
-                                text = 'Dec';
-                                break;
-                              default:
-                                text = '';
-                                break;
-                            }
-                            return SideTitleWidget(
-                              //axisSide: meta.axisSide,
-                              space: 4.0,
-                              meta: TitleMeta(
-                                min: 2,
-                                max: 4,
-                                parentAxisSize: 1,
-                                axisPosition: 1,
-                                appliedInterval: 1,
-                                sideTitles: SideTitles(showTitles: true),
-                                formattedValue: "formattedValue",
-                                axisSide: AxisSide.left,
-                                rotationQuarterTurns: 0,
-                              ),
-                              child: Text(text, style: style),
-                            );
-                          },
+
+              const SizedBox(height: 24),
+
+              /// 🔹 Chart
+              BlocConsumer<TransactionCubit, TransactionState>(
+                listener: (context, state) {
+                  if (state is TransactionLoaded) {
+                    setState(() {
+                      myTransactions = state.transactions;
+                    });
+                  }
+                },
+                builder: (context, state) {
+                  final barGroups = _createBarGroups(myTransactions);
+
+                  return Expanded(
+                    child: BarChart(
+                      BarChartData(
+                        alignment: BarChartAlignment.spaceBetween,
+                        minY: 0,
+                        maxY: _safeMaxY(barGroups),
+                        //barTouchData: BarTouchData(enabled: false),
+                        barTouchData: BarTouchData(
+                          enabled: true,
+                          touchTooltipData: BarTouchTooltipData(
+                            tooltipRoundedRadius: 8,
+                            tooltipPadding: const EdgeInsets.all(8),
+                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                              String label = rodIndex == 0 ? "Income" : "Expenses";
+
+                              return BarTooltipItem(
+                                "$label\n\$${rod.toY.toStringAsFixed(2)}",
+                                const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            },
+                          ),
                         ),
+                        gridData: const FlGridData(show: false),
+                        borderData: FlBorderData(show: false),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 30,
+                              getTitlesWidget:
+                                  (double value, TitleMeta meta) {
+                                const style = TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 10,
+                                );
+
+                                final int month = value.toInt();
+                                if (month < 1 || month > 12) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                const months = [
+                                  'Jan', 'Feb', 'Mar', 'Apr',
+                                  'May', 'Jun', 'Jul', 'Aug',
+                                  'Sep', 'Oct', 'Nov', 'Dec'
+                                ];
+
+                                return SideTitleWidget(
+                                  axisSide: meta.axisSide,
+                                  space: 4,
+                                  child: Text(months[month - 1], style: style),
+                                );
+                              },
+                            ),
+                          ),
+                          leftTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                        ),
+                        barGroups: barGroups,
+
                       ),
-                      leftTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
+
+                      /// 🎬 Animation Control
+                      swapAnimationDuration: _chartDuration,
+                      swapAnimationCurve: _chartCurve,
                     ),
-                    gridData: const FlGridData(show: false),
-                    borderData: FlBorderData(show: false),
-                    barGroups: _createSampleData(),
-                  ),
-                ),
+                  );
+                },
               ),
             ],
           ),
@@ -116,13 +178,15 @@ class IncomeExpensesChart extends StatelessWidget {
     );
   }
 
+  /// 🔹 Legend Widget
   Widget _buildLegend(Color color, String text) {
     return Row(
-      children: <Widget>[
+      children: [
         Container(
           width: 10,
           height: 10,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+          decoration:
+          BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(text, style: const TextStyle(fontSize: 12)),
@@ -130,40 +194,99 @@ class IncomeExpensesChart extends StatelessWidget {
     );
   }
 
-  List<BarChartGroupData> _createSampleData() {
-    return [
-      _makeGroupData(0, 12, 8),
-      _makeGroupData(1, 13, 8),
-      _makeGroupData(2, 11, 9),
-      _makeGroupData(3, 14, 8.5),
-      _makeGroupData(4, 15, 10),
-      _makeGroupData(5, 16, 9),
-    ];
+  /// 🔹 Safe maxY calculation (prevents NaN crash)
+  double _safeMaxY(List<BarChartGroupData> groups) {
+    double maxRod = 0;
+
+    for (final group in groups) {
+      for (final rod in group.barRods) {
+        if (rod.toY.isFinite && rod.toY > maxRod) {
+          maxRod = rod.toY;
+        }
+      }
+    }
+
+    if (maxRod <= 0) return 10.0;
+
+    return maxRod * 1.2; // 20% headroom
   }
 
-  BarChartGroupData _makeGroupData(int x, double y1, double y2) {
-    return BarChartGroupData(
-      x: x,
-      barRods: [
-        BarChartRodData(
-          toY: y1,
-          color: Colors.green,
-          width: 7,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(6),
-            topRight: Radius.circular(6),
+  /// 🔹 Create bar groups safely (NO normalization)
+  List<BarChartGroupData> _createBarGroups(
+      List<Transaction> transactions) {
+    final now = DateTime.now();
+    final year = now.year;
+
+    final incomes = transactions
+        .where((t) => t.category == TransactionCategory.income)
+        .toList();
+
+    final expenses = transactions
+        .where((t) => t.category == TransactionCategory.expense)
+        .toList();
+
+    final transfers = transactions
+        .where((t) => t.category == TransactionCategory.transfert)
+        .toList();
+
+    return List.generate(12, (i) {
+      final month = i + 1;
+
+      double income =
+      CalculatePeriodTransaction.calculateMonthTotalTransaction(
+        incomes,
+        TransactionCategory.income,
+        month,
+        year,
+      );
+
+      double expense =
+      CalculatePeriodTransaction.calculateMonthTotalTransaction(
+        expenses,
+        TransactionCategory.expense,
+        month,
+        year,
+      );
+
+      double transfer =
+      CalculatePeriodTransaction.calculateMonthTotalTransaction(
+        transfers,
+        TransactionCategory.transfert,
+        month,
+        year,
+      );
+
+      /// 🔒 Protect against NaN / Infinity
+      if (!income.isFinite) income = 0;
+      if (!expense.isFinite) expense = 0;
+      if (!transfer.isFinite) transfer = 0;
+
+      return BarChartGroupData(
+        x: month,
+        barRods: [
+          BarChartRodData(
+            toY: income,
+            color: const Color.fromARGB(255, 16, 182, 126),
+            width: 5,
+            borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(3)),
           ),
-        ),
-        BarChartRodData(
-          toY: y2,
-          color: Colors.red,
-          width: 7,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(6),
-            topRight: Radius.circular(6),
+          BarChartRodData(
+            toY: expense,
+            color: const Color.fromARGB(255, 241, 122, 122),
+            width: 5,
+            borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(3)),
           ),
-        ),
-      ],
-    );
+          BarChartRodData(
+            toY: transfer,
+            color: const Color.fromARGB(255, 180, 122, 241),
+            width: 5,
+            borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(3)),
+          ),
+        ],
+      );
+    });
   }
 }

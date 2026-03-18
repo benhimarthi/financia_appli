@@ -15,6 +15,7 @@ class Transaction extends Equatable {
   final bool isPrevision;
   final bool isTransfer;
   final Map<String, dynamic>? transferDetails;
+  final String? currency;
 
   const Transaction({
     required this.id,
@@ -29,6 +30,7 @@ class Transaction extends Equatable {
     this.interestRate,
     this.isTransfer = false,
     this.transferDetails,
+    this.currency,
   });
 
   @override
@@ -45,5 +47,6 @@ class Transaction extends Equatable {
         isPrevision,
         isTransfer,
         transferDetails,
+        currency,
       ];
 }

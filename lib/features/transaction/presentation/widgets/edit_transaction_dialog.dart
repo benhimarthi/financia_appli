@@ -1,11 +1,15 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:myapp/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:myapp/features/transaction/data/models/transaction_model.dart';
 import 'package:myapp/features/transaction/domain/entities/expense_tags.dart';
 import 'package:myapp/features/transaction/domain/entities/transaction.dart';
 import 'package:myapp/features/transaction/domain/entities/transaction_category.dart';
 
 import '../../domain/entities/income_tags.dart';
 import '../../domain/entities/currency.dart';
+import '../bloc/transaction_cubit.dart';
 
 class EditTransactionDialog extends StatefulWidget {
   final Transaction transaction;
@@ -60,13 +64,23 @@ class _EditTransactionDialogState
             curve: Curves.easeIn,
           ),
         );
-    _tags = widget.transaction.category == TransactionCategory.income ? IncomeTags.values.map((x)=>x.name).toList()
-        : ExpenseTags.values.map((x)=>x.name).toList();
+    if(widget.transaction.category == TransactionCategory.income || widget.transaction.category == TransactionCategory.expense){
+      _tags = widget.transaction.category == TransactionCategory.income ? IncomeTags.values.map((x)=>x.name).toList()
+          : ExpenseTags.values.map((x)=>x.name).toList();
+    }else{
+      _tags = [];
+    }
+
     _priceController.text = widget.transaction.amount.toString();
     _detailsController.text = widget.transaction.description;
     _selectedTag = widget.transaction.tag;
     if(widget.transaction.currency != null) {
       _selectedCurrency = widget.transaction.currency.toString();
+    }else{
+      var authState = context.read<AuthCubit>().state;
+      if(authState is AuthSuccess){
+        _selectedCurrency = authState.user.currentCurrency.toString();
+      }
     }
     _animationController.forward();
   }
@@ -129,7 +143,9 @@ class _EditTransactionDialogState
                       crossAxisAlignment:
                       CrossAxisAlignment.start,
                       children: [
-                        Text("Register the: ${widget.transaction.date.toString().substring(0, 10)}", style: TextStyle(color: Colors.white),),
+                        Text.rich(TextSpan(text: "Date : ", children: [
+                          TextSpan(text: widget.transaction.date.toString().substring(0, 10), style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+                        ]), style: TextStyle(color: Colors.white),),
                         const SizedBox(height: 12),
                         /// 🔹 PRICE + CURRENCY
                         Row(
@@ -143,65 +159,41 @@ class _EditTransactionDialogState
                                 style: const TextStyle(
                                     color: Colors.white),
                                 decoration:
-                                _inputDecoration("Price"),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 2,
-                              child: DropdownButtonFormField<String>(
-                                initialValue: _selectedCurrency,
-                                dropdownColor:
-                                Colors.black87,
-                                isExpanded: true,
-                                iconEnabledColor:
-                                Colors.white,
-                                style: const TextStyle(
-                                    color: Colors.white),
-                                decoration:
-                                _inputDecoration("Currency"),
-                                items: _currencies
-                                    .map((currency) =>
-                                    DropdownMenuItem(
-                                      value: currency,
-                                      child: Text(currency),
-                                    ))
-                                    .toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedCurrency =
-                                        value;
-                                  });
-                                },
+                                _inputDecoration("Price").copyWith(
+                                  prefixText: "${widget.transaction.currency.toString()} ",
+                                ),
+
                               ),
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 20),
-
                         /// 🔹 TAG
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedTag,
-                          dropdownColor: Colors.black87,
-                          isExpanded: true,
-                          iconEnabledColor: Colors.white,
-                          style: const TextStyle(
-                              color: Colors.white),
-                          decoration:
-                          _inputDecoration("Tag"),
-                          items: _tags
-                              .map((tag) =>
-                              DropdownMenuItem(
-                                value: tag,
-                                child: Text(tag),
-                              ))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedTag = value;
-                            });
-                          },
+                        Visibility(
+                          visible: widget.transaction.category == TransactionCategory.income ||
+                              widget.transaction.category == TransactionCategory.expense,
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _selectedTag,
+                            dropdownColor: Colors.black87,
+                            isExpanded: true,
+                            iconEnabledColor: Colors.white,
+                            style: const TextStyle(
+                                color: Colors.white),
+                            decoration:
+                            _inputDecoration("Tag"),
+                            items: _tags
+                                .map((tag) =>
+                                DropdownMenuItem(
+                                  value: tag,
+                                  child: Text(tag),
+                                ))
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedTag = value;
+                              });
+                            },
+                          ),
                         ),
 
                         const SizedBox(height: 20),
@@ -229,7 +221,7 @@ class _EditTransactionDialogState
                               child: const Text(
                                 "Cancel",
                                 style: TextStyle(
-                                    color: Colors.white70),
+                                    color: Colors.red,),
                               ),
                             ),
                             ElevatedButton(
@@ -247,6 +239,18 @@ class _EditTransactionDialogState
                                 ),
                               ),
                               onPressed: () {
+                                var modifyTransaction = TransactionModel.fromTransaction(widget.transaction);
+                                modifyTransaction = modifyTransaction.copyWith(
+                                  amount: double.parse(_priceController.text),
+                                  description: _detailsController.text,
+                                  tag: _selectedTag!,
+                                );
+                                if(widget.transaction.currency == null){
+                                  modifyTransaction = modifyTransaction.copyWith(
+                                    currency: _selectedCurrency,
+                                  );
+                                }
+                                context.read<TransactionCubit>().updateTransaction(modifyTransaction);
                                 Navigator.pop(context);
                               },
                               child: const Text("Save"),

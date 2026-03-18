@@ -16,7 +16,40 @@ class TransactionModel extends Transaction {
     super.isTransfer,
     super.interestRate,
     super.transferDetails,
+    super.currency,
   });
+
+  TransactionModel copyWith({
+    String? id,
+    String? userId,
+    double? amount,
+    TransactionCategory? category,
+    DateTime? date,
+    String? description,
+    Periodicity? periodicity,
+    String? tag,
+    bool? isPrevision,
+    bool? isTransfer,
+    double? interestRate,
+    Map<String, dynamic>? transferDetails,
+    String? currency,
+  }) {
+    return TransactionModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      amount: amount ?? this.amount,
+      category: category ?? this.category,
+      date: date ?? this.date,
+      description: description ?? this.description,
+      periodicity: periodicity ?? this.periodicity,
+      tag: tag ?? this.tag,
+      isPrevision: isPrevision ?? this.isPrevision,
+      isTransfer: isTransfer ?? this.isTransfer,
+      interestRate: interestRate ?? this.interestRate,
+      transferDetails: transferDetails ?? this.transferDetails,
+      currency: currency ?? this.currency,
+    );
+  }
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
@@ -32,6 +65,7 @@ class TransactionModel extends Transaction {
       isTransfer: json['isTransfer'] ?? false,
       interestRate: (json['interestRate'] as num?)?.toDouble(),
       transferDetails: json['transferDetails'] as Map<String, dynamic>?,
+      currency: json['currency'],
     );
   }
   
@@ -49,6 +83,7 @@ class TransactionModel extends Transaction {
       isTransfer: transaction.isTransfer,
       interestRate: transaction.interestRate,
       transferDetails: transaction.transferDetails,
+      currency: transaction.currency,
     );
   }
 
@@ -66,6 +101,7 @@ class TransactionModel extends Transaction {
       'isTransfer': isTransfer,
       'interestRate': interestRate,
       'transferDetails': transferDetails,
+      'currency': currency,
     };
     json.removeWhere((key, value) => value == null);
     return json;

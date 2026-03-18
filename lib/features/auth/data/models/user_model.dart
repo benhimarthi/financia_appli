@@ -14,6 +14,7 @@ class UserModel extends User {
     super.phoneNumber,
     super.location,
     super.imageUrl,
+    super.currentCurrency,
   });
 
   const UserModel.empty()
@@ -27,6 +28,7 @@ class UserModel extends User {
           phoneNumber: ' ',
           location: ' ',
           imageUrl: ' ',
+          currentCurrency: '',
         );
 
   factory UserModel.fromJson(DataMap json) {
@@ -40,6 +42,23 @@ class UserModel extends User {
       phoneNumber: json['phoneNumber'] as String?,
       location: json['location'] as String?,
       imageUrl: json['imageUrl'] as String?,
+      currentCurrency: json['currentCurrency'] as String?,
+    );
+  }
+
+  /// Creates a [UserModel] from a domain [User] entity.
+  factory UserModel.fromEntity(User user) {
+    return UserModel(
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      accountType: user.accountType,
+      phoneNumber: user.phoneNumber,
+      location: user.location,
+      imageUrl: user.imageUrl,
+      currentCurrency: user.currentCurrency,
     );
   }
 
@@ -59,6 +78,7 @@ class UserModel extends User {
     String? phoneNumber,
     String? location,
     String? imageUrl,
+    String? currentCurrency,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -70,6 +90,7 @@ class UserModel extends User {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       location: location ?? this.location,
       imageUrl: imageUrl ?? this.imageUrl,
+      currentCurrency: currentCurrency ?? this.currentCurrency,
     );
   }
 
@@ -83,6 +104,7 @@ class UserModel extends User {
       'phoneNumber': phoneNumber,
       'location': location,
       'imageUrl': imageUrl,
+      'currentCurrency': currentCurrency,
     };
   }
 }

@@ -6,5 +6,9 @@ enum ExpenseTags {
   entertainment,
   health,
   education,
-  other,
+  other;
+
+  static ExpenseTags fromString(String type) {
+    return ExpenseTags.values.firstWhere((e) => e.name == type);
+  }
 }

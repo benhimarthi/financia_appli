@@ -1,5 +1,5 @@
 import 'package:myapp/core/utils/typedef.dart';
-import 'package:myapp/features/help_article/domain/entities/help_article.dart';
+import '../../domain/entity/help_article.dart';
 
 class HelpArticleModel extends HelpArticle {
   const HelpArticleModel({

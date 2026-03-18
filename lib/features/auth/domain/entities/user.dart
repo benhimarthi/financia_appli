@@ -11,6 +11,7 @@ class User extends Equatable {
   final String? phoneNumber;
   final String? location;
   final String? imageUrl;
+  final String? currentCurrency;
 
   const User({
     required this.id,
@@ -22,6 +23,7 @@ class User extends Equatable {
     this.phoneNumber,
     this.location,
     this.imageUrl,
+    this.currentCurrency,
   });
 
   const User.empty()
@@ -35,6 +37,7 @@ class User extends Equatable {
           phoneNumber: ' ',
           location: ' ',
           imageUrl: ' ',
+          currentCurrency: '',
         );
 
   @override
@@ -48,5 +51,7 @@ class User extends Equatable {
         phoneNumber,
         location,
         imageUrl,
+        currentCurrency
       ];
+
 }

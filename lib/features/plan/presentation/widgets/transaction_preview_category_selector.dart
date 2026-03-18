@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-
 import '../../../transaction/domain/entities/transaction_category.dart';
 import '../../../transaction/presentation/widgets/expense_transaction_form.dart';
 import '../../../transaction/presentation/widgets/income_transaction_form.dart';
 
 class TransactionPreviewCategorySelector extends StatefulWidget {
-  const TransactionPreviewCategorySelector({super.key});
+  final DateTime previsionDate;
+  const TransactionPreviewCategorySelector({super.key, required this.previsionDate});
 
   @override
   State<TransactionPreviewCategorySelector> createState() => _TransactionPreviewCategorySelectorState();
@@ -24,8 +24,8 @@ class _TransactionPreviewCategorySelectorState extends State<TransactionPreviewC
         ),
       ),
       builder: (context) => category == TransactionCategory.income
-          ? const IncomeTransactionForm(isPrevision: true,)
-          : const ExpenseTransactionForm(isPrevision: true,),
+          ? IncomeTransactionForm(isPrevision: true, previsionDate: widget.previsionDate,)
+          : ExpenseTransactionForm(isPrevision: true, previsionDate: widget.previsionDate,),
     );
   }
 

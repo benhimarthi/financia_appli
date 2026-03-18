@@ -2,8 +2,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:myapp/features/auth/data/models/user_model.dart';
 import 'package:myapp/features/auth/domain/entities/user.dart';
+import 'package:myapp/features/auth/domain/usecases/change_email.dart';
 import 'package:myapp/features/auth/domain/usecases/delete_user.dart';
 import 'package:myapp/features/auth/domain/usecases/forgot_password.dart';
+import 'package:myapp/features/auth/domain/usecases/get_user_by_id.dart';
 import 'package:myapp/features/auth/domain/usecases/is_logged_in.dart';
 import 'package:myapp/features/auth/domain/usecases/sign_in.dart';
 import 'package:myapp/features/auth/domain/usecases/sign_out.dart';
@@ -21,6 +23,8 @@ class AuthCubit extends Cubit<AuthState> {
     required SignOut signOut,
     required UpdateUser updateUser,
     required DeleteUser deleteUser,
+    required ChangeEmail changeEmail,
+    required GetUserById getUserById,
   }) : _signIn = signIn,
        _signUp = signUp,
        _forgotPassword = forgotPassword,
@@ -28,6 +32,8 @@ class AuthCubit extends Cubit<AuthState> {
        _signOut = signOut,
        _updateUser = updateUser,
        _deleteUser = deleteUser,
+        _changeEmail = changeEmail,
+  _getUserById = getUserById,
        super(const AuthInitial());
 
   final SignIn _signIn;
@@ -37,6 +43,8 @@ class AuthCubit extends Cubit<AuthState> {
   final SignOut _signOut;
   final UpdateUser _updateUser;
   final DeleteUser _deleteUser;
+  final ChangeEmail _changeEmail;
+  final GetUserById _getUserById;
 
   Future<void> signIn({required String email, required String password}) async {
     emit(const AuthLoading());
@@ -108,6 +116,24 @@ class AuthCubit extends Cubit<AuthState> {
     result.fold(
       (failure) => emit(AuthError(message: failure.errorMessage)),
       (_) => emit(const AuthInitial()),
+    );
+  }
+
+  Future<void> changeEmail(String newEmail, String password) async {
+    emit(const AuthLoading());
+    final result = await _changeEmail(ChangeEmailParams(newEmail, password));
+    result.fold(
+      (failure) => emit(AuthError(message: failure.errorMessage)),
+      (_) => emit(const EmailChangedSuccessfully()),
+    );
+  }
+
+  Future<void> getUserById(String id)async{
+    emit(const AuthLoading());
+    final result = await _getUserById(id);
+    result.fold(
+      (failure) => emit(AuthError(message: failure.errorMessage)),
+      (user) => emit(AuthSuccess(user: user)),
     );
   }
 

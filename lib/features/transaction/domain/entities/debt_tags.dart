@@ -1,6 +1,6 @@
 enum DebtTags {
-  loan,
-  creditCard,
+  Loan,
+  Creditcard,
   mortgage,
   studentLoan,
   personalLoan,

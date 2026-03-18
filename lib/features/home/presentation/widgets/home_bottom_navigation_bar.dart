@@ -13,7 +13,7 @@ class HomeBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
-      height: 70,
+      height: 80,
       color: Colors.white,
       elevation: 10,
       shadowColor: const Color.fromARGB(255, 230, 230, 230),

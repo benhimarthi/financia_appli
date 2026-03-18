@@ -33,6 +33,10 @@ class AuthError extends AuthState {
   List<Object> get props => [message];
 }
 
+class EmailChangedSuccessfully extends AuthState{
+  const EmailChangedSuccessfully();
+}
+
 class EmitRandomELement extends AuthState {
   final Map<String, dynamic> elements;
 

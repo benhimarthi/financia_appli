@@ -1,3 +1,6 @@
-enum Transferoptions {
-
+enum TransferOptions {
+  fromCash,
+  toCash,
+  fromSavings,
+  toSavings,
 }

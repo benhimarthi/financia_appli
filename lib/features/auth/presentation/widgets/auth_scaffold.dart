@@ -89,7 +89,27 @@ class AuthScaffold extends StatelessWidget {
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: onSubmit,
-                  child: Text(submitButtonText),
+
+                  style: ButtonStyle(
+                    fixedSize: WidgetStateProperty.all(
+                      const Size(double.maxFinite, 50),
+                    ),
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    backgroundColor: WidgetStateProperty.all(
+                      formKey.currentState?.validate() == true
+                          ? Theme.of(context).primaryColor
+                          : const Color.fromARGB(255, 239, 239, 239),
+                    ),
+                  ),
+                  child: Text(submitButtonText, style: TextStyle(
+                      color: formKey.currentState?.validate() == true
+                          ? Colors.white
+                          : Colors.grey
+                  ),),
                 ),
                 if (switchButtonText.isNotEmpty)
                   TextButton(

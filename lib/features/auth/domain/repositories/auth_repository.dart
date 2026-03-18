@@ -19,4 +19,11 @@ abstract class AuthRepository {
   ResultVoid signOut();
 
   ResultFuture<User> updateUser(UserModel params);
+
+  ResultVoid changeEmail({
+    required String newEmail,
+    required String password,
+  });
+
+  ResultFuture<UserModel> getUserById(String id);
 }

@@ -7,9 +7,11 @@ class CalculatePeriodTransaction {
     TransactionCategory category,
     int month,
     int year,
+      { bool isPrevision = false}
   ) {
     //Filter the transactions by income and periodicity
     List<Transaction> incomeTransactions = transactions
+    .where((x) => x.isPrevision == isPrevision).toList()
         .where(
           (transaction) =>
               transaction.category == category &&
@@ -17,9 +19,10 @@ class CalculatePeriodTransaction {
               transaction.date.year == year,
         )
         .toList();
-    return incomeTransactions.fold(0, (previousValue, element) {
+    double totTransactions = incomeTransactions.fold(0, (previousValue, element) {
       return previousValue + element.amount;
     });
+    return totTransactions;
   }
 
   static double calculateMonthTotalTransferFromCash(
@@ -41,8 +44,27 @@ class CalculatePeriodTransaction {
     });
   }
 
+  static double calculateMonthTotalTransferToCash(
+      List<Transaction> transactions,
+      int month,
+      int year,
+      ){
+    List<Transaction> transfer = transactions
+        .where(
+          (transaction) =>
+      transaction.category == TransactionCategory.transfert &&
+          transaction.transferDetails!.values.last == "Cash Available" &&
+          transaction.date.month == month &&
+          transaction.date.year == year,
+    )
+        .toList();
+    return transfer.fold(0, (previousValue, element) {
+      return previousValue + element.amount;
+    });
+  }
+
   static double compareMonthTotalTransaction(
-    List<Transaction> transations,
+    List<Transaction> transactions,
     TransactionCategory category,
     int fromMonth,
     int fromYear,
@@ -50,13 +72,13 @@ class CalculatePeriodTransaction {
     int toYear,
   ) {
     double fromMonthTotal = calculateMonthTotalTransaction(
-      transations,
+      transactions,
       category,
       fromMonth,
       fromYear,
     );
     double toMonthTotal = calculateMonthTotalTransaction(
-      transations,
+      transactions,
       category,
       toMonth,
       toYear,
@@ -65,28 +87,56 @@ class CalculatePeriodTransaction {
   }
 
   static double calculatePeriodTransactionTendancy(
-    List<Transaction> transactions,
-    TransactionCategory category,
-    int fromMonth,
-    int fromYear,
-    int toMonth,
-    int toYear,
-  ) {
-    double fromMonthTotal = compareMonthTotalTransaction(
+      List<Transaction> transactions,
+      TransactionCategory category,
+      int fromMonth,
+      int fromYear,
+      int toMonth,
+      int toYear,
+      ) {
+    // Get the total for the starting period ("from")
+    double previousMonthTotal = calculateMonthTotalTransaction(
+      transactions,
+      category,
+      toMonth,
+      toYear,
+    );
+    // Get the total for the ending period ("to")
+    double currentMonthTotal = calculateMonthTotalTransaction(
       transactions,
       category,
       fromMonth,
       fromYear,
-      toMonth,
-      toYear,
     );
-    double thisMonth = calculateMonthTotalTransaction(
-      transactions,
-      category,
-      toMonth,
-      toYear,
-    );
-    return (fromMonthTotal / thisMonth) * 100;
+    // Avoid division by zero if the starting total was 0
+    if (previousMonthTotal == 0) {
+      // If the new total is also 0, there's no change.
+      // If the new total is positive, you could return 100.0 (representing 100% increase)
+      // or simply return 0.0 to indicate the calculation is not possible.
+      // Returning 0.0 is often safer.
+      return 0.0;
+    }
+
+    // Calculate the difference
+    double difference = currentMonthTotal - previousMonthTotal;
+
+    // Calculate the percentage change
+    double res = difference / previousMonthTotal;
+    // Calculate the percentage change
+    return res;
+  }
+  static double calculateMonthEvolution(List<Transaction> transactions,
+      TransactionCategory category,
+      int month,
+      int year,)
+  {
+    int previousMonth = month - 1 == 0 ? 12 : month - 1;
+    int previousYear = year;
+    if(previousMonth == 12) {
+      previousYear -= 1;
+    }
+    double res = calculatePeriodTransactionTendancy(transactions, category, month, year, previousMonth, previousYear,);
+    return res;
   }
 
   static double calculatePeriodTotalSavings(
@@ -94,37 +144,34 @@ class CalculatePeriodTransaction {
     int month,
     int year,
   ) {
-    List<Transaction> incomeTransactions = transactions
-        .where(
-          (transaction) =>
-              transaction.category == TransactionCategory.income &&
-              transaction.date.month == month &&
-              transaction.date.year == year,
-        )
-        .toList();
-    List<Transaction> expenseTransactions = transactions
-        .where(
-          (x) =>
-              x.category == TransactionCategory.expense &&
-              x.date.month == month &&
-              x.date.year == year,
-        )
-        .toList();
-    double transfert = calculateMonthTotalTransferFromCash(
+    double incomeTransactions = calculateMonthTotalTransaction(transactions, TransactionCategory.income, month, year,);
+    double expenseTransactions = calculateMonthTotalTransaction(transactions, TransactionCategory.expense, month, year,);
+    double debts = calculateMonthTotalTransaction(transactions, TransactionCategory.debt, month, year,);
+    double transferFromCash = calculateMonthTotalTransferFromCash(
       transactions,
       month,
       year,
     );
-    print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB ---- $transfert");
-    double incomeAmount = incomeTransactions.fold(
-      0,
-      (previousValue, element) => previousValue + element.amount,
+    double transferToCash = calculateMonthTotalTransferToCash(
+      transactions,
+      month,
+      year,
     );
-    double expenseAmount = expenseTransactions.fold(
-      0,
-      (previousValue, element) => previousValue + element.amount,
-    );
-    return incomeAmount - expenseAmount;
+    return incomeTransactions + debts + transferToCash - transferFromCash - expenseTransactions;
+  }
+
+  static double calculatePeriodAvailableIncome(
+      List<Transaction> transactions,
+      int fromMonth,
+      int fromYear,
+      int toMonth,
+      int toYear,
+      ) {
+    //check if out of bound
+    var sortedTransactions = transactions..sort((a, b) => a.date.compareTo(b.date));
+    var oldestTransaction = sortedTransactions.first;
+    if(toYear < oldestTransaction.date.year)return calculateTotalAvailableCash(transactions, fromMonth, fromYear);
+    return 0;
   }
 
   static double calculateTotalAvailableCash(
@@ -138,7 +185,6 @@ class CalculatePeriodTransaction {
       month,
       year,
     );
-
     int previousMonth = month - 1;
     int previousYear = year;
     if (previousMonth == 0) {
@@ -152,5 +198,24 @@ class CalculatePeriodTransaction {
       previousYear,
     );
     return currentMonthTotalSavings + lastMonthSavings;
+  }
+
+  static double calculateRemainingAmountFromDept(Transaction debt, List<Transaction> sentToDept){
+    //Transfer transactions to the debt.
+    if(debt.category!=TransactionCategory.debt)return 0;
+    var transactionToDept = sentToDept.where((x)=>x.category == TransactionCategory.transfert).toList().
+    where((x) => x.transferDetails!.values.last == debt.id).toList();
+    double totalTransaction = transactionToDept.fold(0,
+            (previousValue, element) {
+              return previousValue + element.amount;
+    });
+    double debtAmount = debt.amount + (debt.amount * debt.interestRate!);
+    return debtAmount - totalTransaction;
+  }
+
+  static double calculateTotalDebtAmount(Transaction debt){
+    if(debt.category!=TransactionCategory.debt)return 0;
+    double debtAmount = debt.amount + (debt.amount * debt.interestRate!);
+    return debtAmount;
   }
 }

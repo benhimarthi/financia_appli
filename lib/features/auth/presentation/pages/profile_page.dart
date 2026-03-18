@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:myapp/features/auth/data/models/user_model.dart';
+import 'package:myapp/features/auth/domain/entities/user.dart';
+import 'package:myapp/features/auth/presentation/widgets/change_email_dialog.dart';
 
 import '../bloc/auth_cubit.dart';
+import '../widgets/auto_logout_dialog.dart';
+import '../widgets/confirmation_dialog.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -11,6 +16,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  late String newEmail;
+  late User currentUser;
   final TextEditingController _nameController = TextEditingController(
     text: 'Guest User',
   );
@@ -24,10 +31,13 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    newEmail = "";
+    currentUser = UserModel.empty();
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthSuccess) {
       _emailController.text = authState.user.email;
       _nameController.text = authState.user.name;
+      context.read<AuthCubit>().getUserById(authState.user.id);
       //_phoneController.text = authState.user.phone;
       //_locationController.text = authState.user.location;
     }
@@ -37,7 +47,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profil', style: TextStyle(color: Colors.black)),
+        title: const Text('Profile', style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -87,35 +97,100 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'Appuyer pour changer',
+              'Press to change',
               style: TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 40),
             _buildTextField(
               controller: _nameController,
-              label: 'Nom complet',
+              label: 'Complete name',
               icon: Icons.person_outline,
+              onClick : (value){},
+                onChange : (value){}
             ),
             const SizedBox(height: 20),
             _buildTextField(
               controller: _emailController,
               label: 'Email',
               icon: Icons.email_outlined,
+                onClick : (value){
+                  showDialog(
+                      context: context,
+                      builder: (context){
+                        return ChangeEmailDialog(onChangeEmail: (newEmail, password) async{
+                          setState(() {
+                            this.newEmail = newEmail;
+                          });
+                          context.read<AuthCubit>().changeEmail(newEmail, password);
+                          Navigator.pop(context);
+                        });
+                      }
+                  );
+                },
+              onChange: (value){}
+            ),
+            BlocConsumer<AuthCubit, AuthState>(
+              listener: (context, state) {
+                if(state is AuthSuccess){
+                  currentUser = state.user;
+                  setState(() {
+                    _phoneController.text = currentUser.phoneNumber!;
+                  });
+                }
+                if (state is EmailChangedSuccessfully) {
+                  // The SnackBar is good, let's keep it.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Email change initiated successfully')),
+                  );
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false, // User cannot dismiss it by tapping outside
+                    builder: (dialogContext) {
+                      // Provide the AuthCubit to the dialog's context tree
+                      return BlocProvider.value(
+                        value: context.read<AuthCubit>(),
+                        child: const AutoLogoutDialog(
+                          title: 'Vérifiez vos e-mails',
+                          content: 'Un lien de confirmation a été envoyé. Après avoir vérifié votre nouvelle adresse, vous serez déconnecté pour vous reconnecter.',
+                          buttonText: 'Compris',
+                          countdownFrom: 10, // The countdown will start from 10 seconds
+                        ),
+                      );
+                    },
+                  );
+                }
+              },
+              builder: (context, state) {
+                return const SizedBox.shrink(); // Use shrink to take no space
+              },
             ),
             const SizedBox(height: 20),
             _buildTextField(
               controller: _phoneController,
               label: 'Téléphone',
+
               icon: Icons.phone_outlined,
+                onClick : (value){},
+              onChange: (value){
+                var currentUserModel = UserModel.fromEntity(currentUser);
+                var updatedUser = currentUserModel.copyWith(phoneNumber: value);
+                context.read<AuthCubit>().updateUser(updatedUser);
+              }
             ),
             const SizedBox(height: 20),
             _buildTextField(
               controller: _locationController,
               label: 'Localisation',
               icon: Icons.location_on_outlined,
+                onClick : (value){},
+              onChange: (value){
+                  var currentUserModel = UserModel.fromEntity(currentUser);
+                  var updatedUser = currentUserModel.copyWith(location: value);
+                  context.read<AuthCubit>().updateUser(updatedUser);
+              }
             ),
             const SizedBox(height: 40),
-            ElevatedButton(
+            /*ElevatedButton(
               onPressed: () {
                 // Handle save
               },
@@ -126,7 +201,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               child: const Text('Sauvegarder'),
-            ),
+            ),*/
           ],
         ),
       ),
@@ -137,6 +212,8 @@ class _ProfilePageState extends State<ProfilePage> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    required Function(String newValue) onClick,
+    required Function(String newValue) onChange,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,6 +240,13 @@ class _ProfilePageState extends State<ProfilePage> {
               borderSide: const BorderSide(color: Colors.black26),
             ),
           ),
+          onTap: (){
+            onClick(controller.text);
+          },
+          onChanged: (value){
+            onChange(value);
+
+          },
         ),
       ],
     );

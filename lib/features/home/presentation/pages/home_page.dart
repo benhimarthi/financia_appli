@@ -1,11 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:myapp/features/finances/presentation/pages/finances_page.dart';
-import 'package:myapp/features/finances/presentation/widgets/financial_goal_form.dart';
+import 'package:myapp/features/saving_goal/presentation/widgets/financial_goal_form.dart';
 import 'package:myapp/features/home/presentation/pages/home_content.dart';
 import 'package:myapp/features/home/presentation/widgets/home_bottom_navigation_bar.dart';
 import 'package:myapp/features/plan/presentation/pages/plan_page.dart';
+import 'package:myapp/features/transaction/domain/entities/transaction.dart';
 import 'package:myapp/features/transaction/presentation/widgets/debt_form.dart';
 import 'package:myapp/features/transaction/presentation/widgets/expense_transaction_form.dart';
 import 'package:myapp/features/transaction/presentation/widgets/income_transaction_form.dart';
@@ -14,8 +16,11 @@ import 'package:myapp/features/wealth/presentation/pages/wealth_page.dart';
 import 'package:myapp/locale_provider.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../plan/presentation/widgets/show_chat_assistant.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../transaction/domain/entities/transaction_category.dart';
+import '../../../transaction/presentation/bloc/transaction_cubit.dart';
+import '../../../transaction/presentation/bloc/transaction_state.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,6 +31,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  late List<Transaction> transactions;
 
   final List<Widget> _pages = [
     const HomeContent(),
@@ -38,6 +44,12 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    transactions = [];
+    var authState = context.read<AuthCubit>().state;
+    if (authState is AuthSuccess) {
+      context.read<TransactionCubit>().setUserId(authState.user.id);
+      context.read<TransactionCubit>().getTransactions();
+    }
   }
 
   void _onItemTapped(int index) {
@@ -57,18 +69,9 @@ class _HomePageState extends State<HomePage> {
           topRight: Radius.circular(20),
         ),
       ),
-      builder: (context) => Wrap(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: category == TransactionCategory.income
-                ? const IncomeTransactionForm()
-                : const ExpenseTransactionForm(),
-          ),
-        ],
-      ),
+      builder: (context) => category == TransactionCategory.income
+          ? IncomeTransactionForm(isPrevision: false)
+          : ExpenseTransactionForm(isPrevision: false),
     );
   }
 
@@ -76,7 +79,7 @@ class _HomePageState extends State<HomePage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.9,
         minChildSize: 0.5,
@@ -297,92 +300,121 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: SingleChildScrollView(child: _pages[_selectedIndex]),
-      floatingActionButton: SpeedDial(
-        icon: Icons.add,
-        activeIcon: Icons.close,
-        backgroundColor: Colors.grey[200],
-        foregroundColor: Colors.black,
-        activeBackgroundColor: Colors.grey[300],
-        activeForegroundColor: Colors.black,
-        buttonSize: const Size(56.0, 56.0),
-        childrenButtonSize: const Size(56.0, 56.0),
-        visible: true,
-        closeManually: false,
-        curve: Curves.bounceIn,
-        overlayColor: Colors.black,
-        overlayOpacity: 0.5,
-        tooltip: 'Speed Dial',
-        heroTag: 'speed-dial-hero-tag',
-        elevation: 8.0,
-        shape: const CircleBorder(),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          SpeedDialChild(
-            child: CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.green,
-              child: const Icon(Icons.trending_up, color: Colors.white),
-            ),
-            backgroundColor: Colors.transparent,
-            label: 'add_income'.tr(),
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => _showTransactionForm(TransactionCategory.income),
-            shape: ShapeBorder.lerp(
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(60.0)),
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(60.0)),
-              1,
-            ),
-          ),
-          SpeedDialChild(
-            child: CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.red,
-              child: const Icon(Icons.trending_down, color: Colors.white),
-            ),
-            backgroundColor: Colors.transparent,
-            label: 'add_expense'.tr(),
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => _showTransactionForm(TransactionCategory.expense),
-          ),
-          SpeedDialChild(
-            child: CircleAvatar(
-              radius: 40,
-              backgroundColor: const Color.fromARGB(69, 33, 243, 100),
-              child: Image.asset("assets/icons/Bullseye.png", scale: 5),
-            ),
-            backgroundColor: Colors.transparent,
-            label: 'add financial goal',
-            labelStyle: const TextStyle(fontSize: 18.0),
-            shape: ShapeBorder.lerp(
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
-              1,
-            ),
-            onTap: () => _showFinancialGoalForm(),
-          ),
-          SpeedDialChild(
-            child: CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.blue,
-              child: const Icon(Icons.swap_horiz, color: Colors.white),
-            ),
-            backgroundColor: Colors.transparent,
-            label: 'transfer'.tr(),
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => _showTransferForm(),
-          ),
+          SpeedDial(
+            icon: Icons.add,
+            activeIcon: Icons.close,
+            backgroundColor: Colors.green[200],
+            foregroundColor: Colors.black,
+            activeBackgroundColor: Colors.grey[300],
+            activeForegroundColor: Colors.black,
+            buttonSize: const Size(56.0, 56.0),
+            childrenButtonSize: const Size(56.0, 56.0),
+            visible: true,
+            closeManually: false,
+            curve: Curves.bounceIn,
+            overlayColor: Colors.black,
+            overlayOpacity: 0.5,
+            tooltip: 'Speed Dial',
+            heroTag: 'speed-dial-hero-tag',
+            elevation: 8.0,
+            shape: const CircleBorder(),
+            children: [
+              SpeedDialChild(
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.green,
+                  child: const Icon(Icons.trending_up, color: Colors.white),
+                ),
+                backgroundColor: Colors.transparent,
+                label: 'add_income'.tr(),
+                labelStyle: const TextStyle(fontSize: 18.0),
+                onTap: () => _showTransactionForm(TransactionCategory.income),
+                shape: ShapeBorder.lerp(
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(60.0)),
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(60.0)),
+                  1,
+                ),
+              ),
+              SpeedDialChild(
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.red,
+                  child: const Icon(Icons.trending_down, color: Colors.white),
+                ),
+                backgroundColor: Colors.transparent,
+                label: 'add_expense'.tr(),
+                labelStyle: const TextStyle(fontSize: 18.0),
+                onTap: () => _showTransactionForm(TransactionCategory.expense),
+              ),
+              SpeedDialChild(
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: const Color.fromARGB(69, 33, 243, 100),
+                  child: Image.asset("assets/icons/Bullseye.png", scale: 5),
+                ),
+                backgroundColor: Colors.transparent,
+                label: 'add financial goal',
+                labelStyle: const TextStyle(fontSize: 18.0),
+                shape: ShapeBorder.lerp(
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
+                  1,
+                ),
+                onTap: () => _showFinancialGoalForm(),
+              ),
+              SpeedDialChild(
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.blue,
+                  child: const Icon(Icons.swap_horiz, color: Colors.white),
+                ),
+                backgroundColor: Colors.transparent,
+                label: 'transfer'.tr(),
+                labelStyle: const TextStyle(fontSize: 18.0),
+                onTap: () => _showTransferForm(),
+              ),
 
-          SpeedDialChild(
-            child: CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.orange,
-              child: const Icon(Icons.credit_card, color: Colors.white),
-            ),
-            backgroundColor: Colors.transparent,
-            label: 'add_debt'.tr(),
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => _showDebtForm(),
+              SpeedDialChild(
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.orange,
+                  child: const Icon(Icons.credit_card, color: Colors.white),
+                ),
+                backgroundColor: Colors.transparent,
+                label: 'add_debt'.tr(),
+                labelStyle: const TextStyle(fontSize: 18.0),
+                onTap: () => _showDebtForm(),
+              ),
+            ],
           ),
-        ],
+          SizedBox(height: 10,),
+          BlocConsumer<TransactionCubit, TransactionState>(
+            listener: (context, state){
+              if(state is TransactionLoaded){
+                setState(() {
+                  transactions = state.transactions;
+                });
+              }
+            },
+            builder: (context, state) {
+              return SizedBox();
+            },
+          ),
+          GestureDetector(
+            onTap: () {
+              showChatAssistant(context, transactions);
+            },
+            child: CircleAvatar(
+              radius: 30,
+
+              backgroundColor: Colors.grey[200],
+              child: Image.asset("assets/icons/gemini.png", scale:1,),
+            ),
+          )
+        ]
       ),
       bottomNavigationBar: HomeBottomNavigationBar(
         onItemTapped: _onItemTapped,

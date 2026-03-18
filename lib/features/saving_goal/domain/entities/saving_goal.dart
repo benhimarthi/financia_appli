@@ -8,6 +8,7 @@ class SavingGoal extends Equatable {
   final double currentAmount;
   final DateTime targetDate;
   final DateTime date;
+  final String? currency;
 
   const SavingGoal({
     required this.id,
@@ -17,6 +18,7 @@ class SavingGoal extends Equatable {
     required this.currentAmount,
     required this.targetDate,
     required this.date,
+    this.currency,
   });
 
   @override

@@ -11,6 +11,7 @@ import 'package:myapp/features/transaction/domain/entities/transaction.dart';
 import 'package:myapp/features/transaction/domain/entities/transaction_category.dart';
 import 'package:myapp/features/transaction/presentation/bloc/transaction_cubit.dart';
 import 'package:myapp/features/transaction/presentation/bloc/transaction_state.dart';
+import 'package:myapp/features/transaction/presentation/widgets/select_debt.dart';
 import 'package:myapp/features/transaction/presentation/widgets/select_saving_goal.dart';
 import 'package:uuid/uuid.dart';
 
@@ -29,8 +30,10 @@ class _TransferFormState extends State<TransferForm> {
   String? _toAccount;
   bool _showFromSavingGoals = false;
   bool _showToSavingGoals = false;
+  bool _showToDebt = false;
   SavingGoal? _selectedFromGoal;
   SavingGoal? _selectedToGoal;
+  Transaction? _selectedToDebt;
 
   final List<String> _fromOptions = ['Cash Available', 'Savings'];
   final List<String> _toOptions = [
@@ -38,12 +41,15 @@ class _TransferFormState extends State<TransferForm> {
     'Cash Available',
     'Debt Payment',
   ];
+  late String currency;
 
   @override
   void initState() {
     super.initState();
+    currency = "";
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthSuccess) {
+      currency = authState.user.currentCurrency!;
       context.read<TransactionCubit>().setUserId(authState.user.id);
       context.read<TransactionCubit>().getTransactions();
     }
@@ -224,8 +230,12 @@ class _TransferFormState extends State<TransferForm> {
                   setState(() {
                     _toAccount = selected ? account : null;
                     _showToSavingGoals = selected && account == 'Savings Goal';
+                    _showToDebt = selected && account == 'Debt Payment';
                     if (!_showToSavingGoals) {
                       _selectedToGoal = null;
+                    }
+                    if (!_showToDebt) {
+                      _selectedToDebt = null;
                     }
                   });
                 },
@@ -239,6 +249,17 @@ class _TransferFormState extends State<TransferForm> {
                 onGoalSelected: (goal) {
                   setState(() {
                     _selectedToGoal = goal as SavingGoal?;
+                  });
+                },
+              ),
+            ),
+          if (_showToDebt)
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: SelectDebt(
+                onDebtSelected: (debt) {
+                  setState(() {
+                    _selectedToDebt = debt as Transaction?;
                   });
                 },
               ),
@@ -364,13 +385,16 @@ class _TransferFormState extends State<TransferForm> {
                     tag: 'Transfer',
                     isPrevision: false,
                     isTransfer: true,
+                    currency: currency,
                     transferDetails: {
                       'from': _fromAccount == 'Savings'
                           ? _selectedFromGoal!.id
                           : _fromAccount,
                       'to': _toAccount == 'Savings Goal'
                           ? _selectedToGoal!.id
-                          : _toAccount,
+                          : (
+                          _toAccount == "Debt Payment" ?
+                          _selectedToDebt!.id : _toAccount),
                     },
                   );
                   context.read<TransactionCubit>().addTransaction(transaction);

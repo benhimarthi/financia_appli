@@ -23,6 +23,18 @@ class _DebtFormState extends State<DebtForm> {
   final _nameController = TextEditingController();
   final _interestRateController = TextEditingController(text: '0.5');
   DebtTags? _selectedDebtType;
+  late String currency;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    currency = "";
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthSuccess) {
+      currency = authState.user.currentCurrency!;
+    }
+  }
 
   @override
   void dispose() {
@@ -269,6 +281,7 @@ class _DebtFormState extends State<DebtForm> {
                             TransactionCategory.debt, // Debt is an expense
                         periodicity: Periodicity.none,
                         isPrevision: false,
+                        currency: currency,
                         tag: _selectedDebtType.toString().split('.').last,
                         interestRate: double.parse(
                           _interestRateController.text,

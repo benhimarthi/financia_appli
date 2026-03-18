@@ -1,0 +1,7 @@
+what i would actually needs in my financial report is, the file for income transactions whit
+their total and the tendency, a file for expenses transactions with their total and tendency,
+a file for transfer transactions to my saving objective, with the percentage of how much the
+financial objective has been achieve, a file for transfer transactions to my debt transactions
+the total amount transfer, and the remaining amount to pays, the status of the debt, then a file for
+transfer transaction to my available cash, whit a field for the total amount, for each transaction
+instance.

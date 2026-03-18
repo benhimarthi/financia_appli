@@ -7,6 +7,10 @@ abstract class HelpArticleState extends Equatable {
   List<Object> get props => [];
 }
 
+class CreateHelpArticleSuccessful extends HelpArticleState {
+  const CreateHelpArticleSuccessful();
+}
+
 class HelpArticleInitial extends HelpArticleState {
   const HelpArticleInitial();
 }

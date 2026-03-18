@@ -10,7 +10,23 @@ class SavingGoalModel extends SavingGoal {
     required super.currentAmount,
     required super.targetDate,
     required super.date,
+    super.currency,
   });
+
+  /// Creates an empty user [SavingGoalModel].
+  /// It's used as a placeholder in the UI.
+  factory SavingGoalModel.empty() {
+    return SavingGoalModel(
+      id: '',
+      userId: '',
+      name: '',
+      targetAmount: 0,
+      currentAmount: 0,
+      targetDate: DateTime.now(),
+      date: DateTime.now(),
+      currency: '',
+    );
+  }
 
   factory SavingGoalModel.fromMap(Map<String, dynamic> map) {
     return SavingGoalModel(
@@ -21,6 +37,7 @@ class SavingGoalModel extends SavingGoal {
       currentAmount: (map['currentAmount'] as num).toDouble(),
       targetDate: (map['targetDate'] as Timestamp).toDate(),
       date: (map['date'] as Timestamp).toDate(),
+      currency: map['currency'],
     );
   }
 
@@ -33,6 +50,7 @@ class SavingGoalModel extends SavingGoal {
       currentAmount: savingGoal.currentAmount,
       targetDate: savingGoal.targetDate,
       date: savingGoal.date,
+      currency: savingGoal.currency,
     );
   }
 
@@ -45,6 +63,7 @@ class SavingGoalModel extends SavingGoal {
       'currentAmount': currentAmount,
       'targetDate': targetDate,
       'date': date,
+      'currency': currency,
     };
   }
 
@@ -56,6 +75,7 @@ class SavingGoalModel extends SavingGoal {
     double? currentAmount,
     DateTime? targetDate,
     DateTime? date,
+    String? currency,
   }) {
     return SavingGoalModel(
       id: id ?? this.id,
@@ -65,6 +85,7 @@ class SavingGoalModel extends SavingGoal {
       currentAmount: currentAmount ?? this.currentAmount,
       targetDate: targetDate ?? this.targetDate,
       date: date ?? this.date,
+      currency: currency ?? this.currency,
     );
   }
 }

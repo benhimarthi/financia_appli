@@ -22,7 +22,7 @@ class SavingGoalPage extends StatelessWidget {
             if (state is SavingGoalLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is SavingGoalLoaded) {
-              return SavingGoalList(savingGoals: state.savingGoals);
+              //return SavingGoalList(savingGoals: state.savingGoals);
             } else if (state is SavingGoalError) {
               return Center(child: Text(state.message));
             }

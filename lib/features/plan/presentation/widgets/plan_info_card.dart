@@ -25,6 +25,7 @@ class PlanInfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color:backgroundColor)
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,6 +39,7 @@ class PlanInfoCard extends StatelessWidget {
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: AppPalette.greyColor,
+                    fontSize: 10,
                       ),
                 ),
               ),

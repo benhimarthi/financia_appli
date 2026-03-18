@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 class CashAvailableCard extends StatelessWidget {
-  const CashAvailableCard({super.key});
+  final double amount;
+  const CashAvailableCard({super.key, required this.amount});
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 20,
-      shadowColor: const Color.fromARGB(82, 0, 0, 0),
+      //elevation: 20,
+      shadowColor: Colors.transparent,
+      color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -16,19 +18,19 @@ class CashAvailableCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
-                Text('Cash Available', style: TextStyle(color: Colors.grey)),
+                Text('Cash Available ', style: TextStyle(color: Colors.grey, fontSize: 18)),
                 Icon(Icons.account_balance_wallet),
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
-              '\$2,080',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Text(
+              '\$$amount',
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
               'Income - Expenses',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ],
         ),
