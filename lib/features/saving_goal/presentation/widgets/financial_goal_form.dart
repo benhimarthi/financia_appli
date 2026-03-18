@@ -55,17 +55,22 @@ class _FinancialGoalFormState extends State<FinancialGoalForm> {
           date: DateTime.now(),
         );
         context.read<SavingGoalCubit>().addSavingGoal(goal);
+        var uid = Uuid().v4();
         var trans = Transaction(
-          id: Uuid().v4(),
+          id: uid,
           userId: authState.user.id,
           amount: _currentAmount,
           category: TransactionCategory.transfert,
           date: DateTime.now(),
-          description: "transfert fund to saving account",
+          description: "transfer fund to saving account",
           periodicity: Periodicity.none,
-          tag: "transfert",
+          tag: "transfer",
           isPrevision: false,
           isTransfer: true,
+          transferDetails: {
+            'from': 'Cash Available',
+            'to': uid,
+          },
         );
         context.read<TransactionCubit>().addTransaction(trans);
       }
@@ -189,7 +194,7 @@ class _FinancialGoalFormState extends State<FinancialGoalForm> {
               ),
               child: Text(
                 'The current amount will be taken from your current available cash,'
-                'You can you the transfert option for futher cash movements',
+                'You can you the transfer option for futher cash movements',
                 style: TextStyle(color: Colors.black54),
               ),
             ),
